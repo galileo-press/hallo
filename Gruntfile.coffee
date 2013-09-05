@@ -34,7 +34,7 @@ module.exports = ->
         ext: '.js'
       plugins:
         expand: true
-        src: ['**.coffee']
+        src: ['**/*.coffee']
         dest: 'tmp/plugins'
         cwd: 'src/plugins'
         ext: '.js'
