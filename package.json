@@ -16,7 +16,11 @@
     "grunt-contrib-jshint": "~0.5.4",
     "grunt-bower-task": "~0.3.2",
     "grunt-contrib-connect": "~0.5.0",
-    "grunt-saucelabs": "~4.0.4"
+    "grunt-saucelabs": "~4.0.4",
+    "grunt-contrib-watch": "~0.5.3",
+    "matchdep": "~0.1.2",
+    "connect-livereload": "~0.3.0",
+    "grunt-recess": "~0.4.0"
   },
   "docco_husky": {
     "output_dir": "docs",

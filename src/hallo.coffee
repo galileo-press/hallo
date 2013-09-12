@@ -238,6 +238,11 @@ http://hallojs.org
         window.getSelection().removeAllRanges()
 
     getPluginInstance: (plugin) ->
+      # Just look for items ending with 'plugin'
+      for k of jQuery(@element).data()
+        if /plugin$/i.test(k)
+          instance = jQuery(@element).data(k)
+          return instance if instance
       # jQuery UI 1.10 or newer
       instance = jQuery(@element).data "IKS-#{plugin}"
       return instance if instance

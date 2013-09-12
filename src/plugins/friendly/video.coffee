@@ -74,13 +74,10 @@
 			[id, provider] = EmbedCode.getId(urlOrId)
 			new EmbedCode id, provider
 
-	jQuery.widget 'IKS.hallovideo',
+	jQuery.widget 'BF.friendly-video-plugin',
 		options:
 			editable: null
-			placeholder: 'Hello World placeholder'
-			className: 'halloEditIndicator'
 			uuid: ''
-			buttonCssClass: null
 			defaultUrl: 'pqAsIm9_Eg4'
 			usePlaceholder: false
 			dialogOpts:
@@ -88,7 +85,7 @@
 				buttonTitle: "Insert"
 				buttonUpdateTitle: "Update"
 				autoOpen: false
-				width: 560
+				width: 340
 				height: 'auto'
 				modal: false
 				resizable: true
@@ -102,9 +99,7 @@
 
 		_create: ->
 			this.element.on 'halloenabled', =>
-				console.log "Hallo enabled"
-				undefined
-
+				return
 
 		populateToolbar: (toolbar) ->
 			widget = this
@@ -123,7 +118,7 @@
 
 				# Set Id
 				$dialog = $("<div>").
-					attr('id', "#{@options.uuid}-dialog").
+					attr('id', "#{@options.uuid}-video-dialog").
 					html(dialog_html)
 
 				# Return dialog
@@ -136,7 +131,7 @@
 				$button = $ '<span></span>'
 				$button.hallobutton
 					label: "Video"
-					icon: "icon-picture"
+					icon: "icon-film"
 					uuid: @options.uuid
 					editable: @options.editable
 					command: null
@@ -203,6 +198,7 @@
 				editable.element.focus()
 				$document.scrollTop(pos)  # restore scrollbar pos
 				editable.keepActivated false
+				return
 
 			# Append the button to the toolbar
 			@button = buttonize "Video"
@@ -218,11 +214,11 @@
 			widget = this
 
 			$editableEl = $ @options.editable.element
-			xposition = $editableEl.offset().left + $editableEl.outerWidth() + 10
-			yposition = @toolbar.offset().top - $(document).scrollTop() + 10
+#			xposition = $editableEl.offset().left + $editableEl.outerWidth() + 10
+#			yposition = @toolbar.offset().top - $(document).scrollTop() + 10
 
 			# Set position of the dialog
-			@dialog.dialog("option", "position", [xposition, yposition])
+#			@dialog.dialog("option", "position", [xposition, yposition])
 
 			@options.editable.keepActivated true
 

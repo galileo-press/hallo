@@ -3,6 +3,7 @@
   "version": "1.0.4",
   "main": "./dist/hallo.js",
   "license": "MIT",
+  "main": [ "dist/hallo.js", "dist/hallo.min.js", "dist/hallo.css" ],
   "ignore": [
     "**/.*",
     "node_modules",

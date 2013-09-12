@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Friendly Hallo Example</title>
+		<link rel="stylesheet" href="jquery-ui-bootstrap/css/custom-theme/jquery-ui-1.8.16.custom.css" />
+		<link rel="stylesheet" href="fontawesome/css/font-awesome.css" charset="utf-8" />
+		<!--[if lt IE 9]>
+				<link rel="stylesheet" href="fontawesome/css/font-awesome-ie7.css" charset="utf-8" />
+		<![endif]-->
+		<link rel="stylesheet" href="../dist/hallo.css" />
+		<script src="../lib/jquery/jquery.js"></script>
+		<script src="../lib/jquery-ui/jquery-ui.js"></script>
+		<script src="../lib/rangy/rangy-core.js"></script>
+		<script src="../dist/hallo.js"></script>
+
+		<style type="text/css">
+			body { font-family: Helvetica, Verdana, Arial; font-size: 14px; }
+			.container { width: 720px; margin: 0 auto; }
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<button id="enable">Enable</button>
+			<button id="disable">Disable</button>
+
+			<p id="modified">Editables have not been modified</p>
+
+			<h1 class="editable">Hello World</h1>
+			<div class="editable">
+				<p>
+					Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.
+				</p>
+				<table>
+					<tr>
+						<td>A</td>
+						<td>B</td>
+						<td>C</td>
+					</tr>
+					<tr>
+						<td>D</td>
+						<td>E</td>
+						<td>F</td>
+					</tr>
+				</table>
+				<iframe data-video="youtube--pqAsIm9_Eg4" src="//www.youtube.com/embed/pqAsIm9_Eg4" width="560" height="315" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>
+				<table>
+						<tr>
+								<td width="70%">Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.</td>
+								<td width="30%">Nam liber tempor cum soluta nobis eleifend option congue nihil imperdiet doming id quod mazim placerat facer possim assum. Typi non habent claritatem insitam; est usus legentis in iis qui facit eorum claritatem. Investigationes demonstraverunt lectores legere me lius quod ii legunt saepius.</td>
+						</tr>
+				</table>
+			</div>
+		</div>
+
+		<script>
+			searchresult = [];
+			searchresult.push({
+				url: 'http://www.perfectoutdoorweddings.com/wp-content/uploads/2011/06/beach.jpg',
+				alt: 'Crazy beach, but no girls'
+			});
+			searchresult.push({
+				url: 'http://www.photosnewportbeach.com/artwork/newport-beach-sunset.jpg',
+				alt: 'Sunset from my balconey'
+			});
+			searchresult.push({
+				url: 'http://www.capetowndailyphoto.com/uploaded_images/Beach_Girl_IMG_3563-761741.jpg',
+				alt: 'My sister in Capetown'
+			});
+			searchresult.push({
+				url: 'http://news.fullorissa.com/wp-content/uploads/2011/06/PuriBeach.jpg',
+				alt: 'New Dehli chatting'
+			});
+			searchresult.push({
+				url: 'http://www.hotelplan.ch/CMS/1/1823506/4/ferien_auf_den_malediven.jpg',
+			});
+			searchresult.push({
+				url: 'http://stuckincustoms.smugmug.com/Portfolio-The-Best/your-favorites/3410783929310572ed16o/742619149_CYkrj-750x750.jpg',
+				alt: 'Blue mountains'
+			});
+			searchresult.push({
+				url: 'http://media.smashingmagazine.com/images/fantastic-hdr-pictures/hdr-10.jpg',
+				alt: 'Sun, Clouds, Stuff'
+			});
+			searchresult.push({
+				url: 'http://farm3.static.flickr.com/2139/1524795919_62631ab870.jpg',
+				alt: 'Two lone trees'
+			});
+			searchresult.push({
+				url: 'http://www.bigpicture.in/wp-content/uploads/2010/12/HDR-Photography-By-Paul-21-660x494.jpg',
+				alt: 'Bridge'
+			});
+
+			function search(name, a, b, callback) {
+				callback({ 'assets': searchresult});
+//				alert('search');
+			}
+			function upload() {
+				alert('upload');
+			}
+
+			jQuery('#enable').button().click(function() {
+				jQuery('.editable')
+					.hallo({
+						plugins: {
+							'halloindicator': {},
+							'halloformat': {},
+							'halloheadings': {},
+							'hallojustify': {},
+							'hallolists': {},
+							'hallolink': {},
+							'halloreundo': {},
+							'friendly-table-plugin': {},
+							'friendly-video-plugin': {},
+							'friendly-image-plugin': {
+								'search' : search,
+								'searchUrl': 'http://127.0.0.1:8000/api2/s3/?prefix=testing/help',
+								'upload' : upload,
+							}
+						},
+						editable: true,
+						toolbar: 'halloToolbarFixed'
+					})
+					.hallo('protectFocusFrom', jQuery('#enable'));
+
+				jQuery('.editable')
+					.bind('hallomodified', function(event, data) {
+						jQuery('#modified').html("Editables modified");
+					})
+					.bind('halloselected', function(event, data) {
+						jQuery('#modified').html("Selection made");
+					})
+					.bind('hallounselected', function(event, data) {
+						jQuery('#modified').html("Selection removed");
+					});
+			});
+
+			jQuery('#disable').button().click(function() {
+				jQuery('.editable').hallo({editable: false});
+			});
+
+			jQuery('.editable').bind('hellodeactivated', function() {
+					alert("foobar");
+				$(this).hallo({editable:false});
+			});
+		</script>
+	</body>
+</html>
