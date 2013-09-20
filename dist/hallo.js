@@ -748,6 +748,634 @@
 }).call(this);
 
 (function() {
+  (function($) {
+    return $.widget("BF.friendly-image-plugin", {
+      options: {
+        uuid: "",
+        editable: null,
+        search: null,
+        searchUrl: null,
+        upload: null,
+        uploadUrl: null,
+        dialogOpts: {
+          autoOpen: false,
+          width: 500,
+          height: 400,
+          title: "Insert Images",
+          modal: false,
+          resizable: false,
+          draggable: true,
+          dialogClass: 'friendly-image-dialog',
+          maxWidth: 250,
+          maxHeight: 250
+        }
+      },
+      toolbar: null,
+      populateToolbar: function(toolbar) {
+        var buttonize, buttonset, createDialog, widget,
+          _this = this;
+        this.toolbar = toolbar;
+        widget = this;
+        createDialog = function() {
+          var $browseButton, $dialog, $fileInput, $imageUploadQueue, $resetButton, $uploadButton, buttonTitle, dialog_html;
+          buttonTitle = "Upload image";
+          dialog_html = "					<form action=\"#\" method=\"post\" class=\"image-upload-form\">						<input type=\"file\" style=\"display:none\" multiple=\"\" />						<button class=\"browse\">Browse</button>						<button class=\"upload\" style=\"display:none\">Upload</button>						<button class=\"reset\" style=\"display:none\">Reset</button>					</form>					<div>						<ul class=\"image-upload-queue\"></ul>						<ul class=\"available-images group\"></ul>					</div>";
+          _this.$dialog = $dialog = $("<div>").attr('id', "" + _this.options.uuid + "-friendly-image-dialog").html(dialog_html);
+          $fileInput = $dialog.find('input[type="file"]');
+          $imageUploadQueue = $dialog.find('ul.image-upload-queue');
+          $uploadButton = $dialog.find('button.upload');
+          $uploadButton.click(function(e) {
+            var $buttons, processUploads;
+            e.preventDefault();
+            $buttons = $('button.remove', $imageUploadQueue);
+            $buttons.hide();
+            (processUploads = function(i) {
+              var $button, $spinner, file, xhr;
+              if (--i < 0) {
+                widget._refreshImages();
+                return;
+              }
+              $button = $($buttons.get(i));
+              $spinner = $button.siblings('.icon-spinner');
+              file = $button.data('file');
+              xhr = $.ajax({
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                  type: file.type,
+                  name: "/testing/help/" + file.name,
+                  method: 'PUT'
+                },
+                url: "http://127.0.0.1:8000/api2/s3/",
+                async: false
+              });
+              xhr.done(function(data, status, xhr) {
+                var upload;
+                $spinner.show();
+                upload = $.ajax({
+                  type: 'PUT',
+                  url: data.url,
+                  headers: {
+                    'Content-Type': file.type
+                  },
+                  xhr: function() {
+                    xhr = jQuery.ajaxSettings.xhr();
+                    if (xhr.upload != null) {
+                      xhr.upload.addEventListener('progress', function(e) {
+                        var percentComplete;
+                        if (e.lengthComputable) {
+                          percentComplete = e.loaded / e.total;
+                          return console.log("" + file.name + ": " + percentComplete);
+                        }
+                      }, false);
+                    }
+                    return xhr;
+                  },
+                  beforeSend: function(xhr) {
+                    xhr.overrideMimeType(file.type);
+                  },
+                  contentType: false,
+                  data: file,
+                  cache: false,
+                  processData: false,
+                  multipart: true,
+                  async: false,
+                  crossDomain: true
+                });
+                upload.done(function(data) {
+                  $button.click();
+                  processUploads(i);
+                });
+              });
+            })($buttons.length);
+            return false;
+          });
+          $resetButton = $dialog.find('button.reset');
+          $resetButton.click(function(e) {
+            e.preventDefault();
+            $('button.remove', $imageUploadQueue).each(function() {
+              $(this).click();
+            });
+            $browseButton.show();
+            $uploadButton.hide();
+            $resetButton.hide();
+            return false;
+          });
+          $browseButton = $dialog.find('button.browse');
+          $browseButton.click(function(e) {
+            e.preventDefault();
+            $fileInput.click();
+            return false;
+          });
+          $dialog.on('click', 'ul.available-images img', function(e) {
+            widget._insertImage(e.currentTarget.src);
+          });
+          $fileInput.bind('change', function(e) {
+            var $item, $removeButton, file, files, _i, _len;
+            files = e.target.files;
+            $resetButton.click();
+            $imageUploadQueue.hide();
+            for (_i = 0, _len = files.length; _i < _len; _i++) {
+              file = files[_i];
+              $item = $("<li>								<span class=\"filename\">" + file.name + "</span> 								<span class=\"filetype\">(" + (file.type || 'n/a') + ")</span>								<button class=\"remove\">Remove</button>								<i class=\"icon-spinner icon-spin icon-large\" style=\"display:none\"></i>							</li>");
+              $removeButton = $item.find('button');
+              $removeButton.data('file', file);
+              $removeButton.click(function(e) {
+                e.preventDefault();
+                $(e.target).parent().remove();
+                if (!$imageUploadQueue.children().length) {
+                  $resetButton.click();
+                }
+                return false;
+              });
+              $imageUploadQueue.append($item);
+            }
+            $imageUploadQueue.show();
+            $browseButton.hide();
+            $uploadButton.show();
+            $resetButton.show();
+          });
+          return $dialog;
+        };
+        buttonize = function(options) {
+          var $button, id;
+          id = "" + _this.options.uuid + "-image-button";
+          $button = $('<span></span>');
+          $button.hallobutton({
+            label: options.label || 'Image',
+            icon: "icon-camera",
+            uuid: options.uuid,
+            editable: _this.options.editable,
+            command: null,
+            queryState: false
+          });
+          $button.click(function() {
+            if (widget.dialog.dialog("isOpen")) {
+              widget._closeDialog();
+            } else {
+              widget.lastSelection = widget.options.editable.getSelection();
+              widget._openDialog();
+            }
+            return false;
+          });
+          return $button;
+        };
+        this.dialog = createDialog();
+        this.dialog.dialog(this.options.dialogOpts);
+        this.dialog.on('dialogclose', function() {
+          console.log('Close dialog');
+          widget.options.editable.element.focus();
+          widget.options.editable.keepActivated(false);
+        });
+        this.button = buttonize({
+          uuid: this.options.uuid,
+          label: "Image"
+        });
+        buttonset = this.button.hallobuttonset();
+        buttonset.append(this.button);
+        toolbar.append(buttonset);
+        this.toolbar = toolbar;
+        this.options.editable.element.on("hallodeactivated", function(event) {
+          return widget._closeDialog();
+        });
+        jQuery(this.options.editable.element).delegate("img", "click", function(event) {
+          return widget._openDialog();
+        });
+      },
+      _create: function() {},
+      destroy: function() {},
+      cleanupContentClone: function(element) {},
+      _insertImage: function(url) {
+        var editable;
+        editable = this.options.editable;
+        editable.restoreSelection(this.lastSelection);
+        document.execCommand("insertImage", null, url);
+        editable.element.trigger('change');
+        editable.removeAllSelections();
+        this._closeDialog();
+      },
+      _refreshImages: function() {
+        var widget;
+        widget = this;
+        if (this.isRefreshing) {
+          return;
+        }
+        this.isRefreshing = true;
+        return $.getJSON(this.options.searchUrl, function(data, status) {
+          var $list, itemUrl, _i, _len, _ref;
+          $list = widget.dialog.find('ul.available-images').hide().empty();
+          _ref = data.items;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            itemUrl = _ref[_i];
+            $list.append("<li><img src=\"" + data.host + "/" + itemUrl + "\" width=\"100\" height=\"100\"></img></li>");
+          }
+          $list.show();
+          widget.isRefreshing = false;
+        });
+      },
+      _openDialog: function() {
+        var $editableEl, widget;
+        widget = this;
+        $editableEl = $(this.options.editable.element);
+        this.lastSelection = this.options.editable.getSelection();
+        this.options.editable.keepActivated(true);
+        this._refreshImages();
+        widget.dialog.dialog("open");
+      },
+      _closeDialog: function() {
+        this.dialog.dialog("close");
+      }
+    });
+  })(jQuery);
+
+}).call(this);
+
+(function() {
+  (function($) {
+    return jQuery.widget('BF.friendly-table-plugin', {
+      options: {
+        editable: null,
+        uuid: '',
+        defaultCols: 4,
+        defaultRows: 5,
+        dialogOpts: {
+          title: "Table",
+          buttonTitle: "Insert",
+          buttonUpdateTitle: "Update",
+          autoOpen: false,
+          width: 560,
+          height: 'auto',
+          modal: false,
+          resizable: true,
+          draggable: true,
+          dialogClass: 'insert-table-dialog'
+        }
+      },
+      dialog: null,
+      toolbar: null,
+      button: null,
+      populateToolbar: function(toolbar) {
+        var buttonize, buttonset, createDialog, widget,
+          _this = this;
+        widget = this;
+        createDialog = function() {
+          var $dialog, buttonTitle, buttonUpdateTitle, dialog_html;
+          buttonTitle = _this.options.dialogOpts.buttonTitle;
+          buttonUpdateTitle = _this.options.dialogOpts.buttonUpdateTitle;
+          dialog_html = "						<form action=\"#\" method=\"post\" class=\"tableForm\">							<label for=\"cols\">Anzahl Spalten</label>							<input class=\"cols\" type=\"text\" name=\"cols\"							       value=\"" + _this.options.defaultCols + "\" /><br/>							<label for=\"row\">Anzahl Zeilen</label>							<input class=\"rows\" type=\"text\" name=\"rows\"							       value=\"" + _this.options.defaultRows + "\" /><br/>							<label for=\"\">Erste Zeile als Kopfzeile</label>							<input class=\"rows\" type=\"checkbox\" name=\"header\"							       checked=\"checked\" /><br/>							<input type=\"submit\" id=\"addTableButton\" 							       value=\"" + buttonTitle + "\"/>						</form>";
+          $dialog = $("<div>").attr('id', "" + _this.options.uuid + "-dialog").html(dialog_html);
+          return $dialog;
+        };
+        buttonset = jQuery("<span class=\"" + widget.widgetName + "\"></span>");
+        buttonize = function(type) {
+          var $button, id;
+          id = "" + _this.options.uuid + "-" + type;
+          $button = $('<span></span>');
+          $button.hallobutton({
+            label: "Video",
+            icon: "icon-table",
+            uuid: _this.options.uuid,
+            editable: _this.options.editable,
+            command: null,
+            queryState: false,
+            cssClass: _this.options.buttonCssClass
+          });
+          $button.click(function() {
+            console.log("Click");
+            if (widget.dialog.dialog("isOpen")) {
+              widget._closeDialog();
+            } else {
+              widget.lastSelection = widget.options.editable.getSelection();
+              widget._openDialog();
+            }
+            return false;
+          });
+          return $button;
+        };
+        this.dialog = createDialog();
+        this.dialog.dialog(this.options.dialogOpts);
+        this.dialog.find("input[type=submit]").click(function(e) {
+          var colCount, rowCount;
+          e.preventDefault();
+          colCount = $('input[name="cols"]', e.target.parentNode).val();
+          rowCount = $('input[name="rows"]', e.target.parentNode).val();
+          _this._insertTable(colCount, rowCount, true);
+          return false;
+        });
+        this.dialog.on('dialogclose', function() {
+          var $document, editable, pos;
+          $document = $(document);
+          editable = _this.options.editable;
+          pos = $document.scrollTop();
+          editable.element.focus();
+          $document.scrollTop(pos);
+          editable.keepActivated(false);
+        });
+        this.button = buttonize("Table");
+        buttonset.append(this.button);
+        toolbar.append(buttonset);
+        this.toolbar = toolbar;
+      },
+      _openDialog: function(iframe) {
+        var $editableEl, $iframe, widget;
+        $iframe = $(iframe);
+        widget = this;
+        $editableEl = $(this.options.editable.element);
+        this.options.editable.keepActivated(true);
+        this.dialog.dialog("open");
+      },
+      _closeDialog: function() {
+        this.dialog.dialog("close");
+      },
+      _insertTable: function(cols, rows, header) {
+        var colsHtml, editable, headerHtml, html, num, rowsHtml;
+        colsHtml = (function() {
+          var _i, _results;
+          _results = [];
+          for (num = _i = 1; 1 <= cols ? _i <= cols : _i >= cols; num = 1 <= cols ? ++_i : --_i) {
+            _results.push('<td></td>');
+          }
+          return _results;
+        })();
+        rowsHtml = (function() {
+          var _i, _results;
+          _results = [];
+          for (num = _i = 1; 1 <= rows ? _i <= rows : _i >= rows; num = 1 <= rows ? ++_i : --_i) {
+            _results.push("<tr>" + (colsHtml.join('')) + "</tr>");
+          }
+          return _results;
+        })();
+        if (true === header) {
+          headerHtml = (function() {
+            var _i, _results;
+            _results = [];
+            for (num = _i = 1; 1 <= cols ? _i <= cols : _i >= cols; num = 1 <= cols ? ++_i : --_i) {
+              _results.push('<th></th>');
+            }
+            return _results;
+          })();
+          headerHtml = "<thead>" + (headerHtml.join('')) + "</thead>";
+        }
+        html = "<table>" + headerHtml + "<tbody>" + (rowsHtml.join('')) + "</tbody></table>";
+        editable = this.options.editable;
+        editable.restoreSelection(this.lastSelection);
+        document.execCommand("insertHTML", null, html);
+        editable.element.trigger('change');
+        editable.removeAllSelections();
+        this._closeDialog();
+      }
+    });
+  })(jQuery);
+
+}).call(this);
+
+(function() {
+  var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+
+  (function($) {
+    var EmbedCode;
+    EmbedCode = (function() {
+      EmbedCode.UNSUPPORTED = 'unsupported';
+
+      EmbedCode.YOUTUBE = 'youtube';
+
+      EmbedCode.VIMEO = 'vimeo';
+
+      EmbedCode.PROVIDERS = [EmbedCode.YOUTUBE, EmbedCode.VIMEO];
+
+      function EmbedCode(id, provider) {
+        var _ref;
+        this.id = id;
+        this.provider = provider;
+        if (_ref = !this.provider, __indexOf.call(EmbedCode.PROVIDERS, _ref) >= 0) {
+          throw new Error;
+        }
+      }
+
+      EmbedCode.prototype.generateUrl = function(id, provider) {
+        var url;
+        url = null;
+        switch (this.provider) {
+          case EmbedCode.YOUTUBE:
+            url = "//www.youtube.com/embed/" + id;
+            break;
+          case EmbedCode.VIMEO:
+            url = "//player.vimeo.com/video/" + id;
+        }
+        return url;
+      };
+
+      EmbedCode.prototype.generateThumbnailUrl = function(id, provider) {
+        var url;
+        url = null;
+        switch (this.provider) {
+          case EmbedCode.YOUTUBE:
+            url = "//img.youtube.com/vi/" + id + "/0.jpg";
+        }
+        return url;
+      };
+
+      EmbedCode.prototype.getThumbnailCode = function() {
+        var html, url;
+        html = null;
+        url = this.generateThumbnailUrl(this.id, this.provider);
+        switch (this.provider) {
+          case EmbedCode.YOUTUBE:
+            html = "<img src=\"" + url + "\" data-video=\"" + this.provider + "--" + this.id + "\" />";
+        }
+        return html;
+      };
+
+      EmbedCode.prototype.getEmbedCode = function() {
+        var embedCode, url;
+        embedCode = null;
+        url = this.generateUrl(this.id, this.provider);
+        switch (this.provider) {
+          case EmbedCode.YOUTUBE:
+            embedCode = "<iframe data-video=\"" + this.provider + "--" + this.id + "\" src=\"" + url + "\" width=\"560\" height=\"315\" frameborder=\"0\" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>";
+            break;
+          case EmbedCode.VIMEO:
+            embedCode = "<iframe data-video=\"" + this.provider + "--" + this.id + "\" src=\"" + url + "\" width=\"560\" height=\"315\" frameborder=\"0\" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>";
+        }
+        return embedCode;
+      };
+
+      EmbedCode.getId = function(urlOrId) {
+        var id, provider, url, _ref, _ref1;
+        id = -1;
+        provider = null;
+        if (urlOrId.indexOf('://') !== -1) {
+          if (urlOrId.indexOf('//') !== -1) {
+            urlOrId = urlOrId.slice(urlOrId.indexOf('//'));
+          }
+          if (urlOrId.indexOf('youtube.com') !== -1) {
+            provider = EmbedCode.YOUTUBE;
+            _ref = /^\/\/www.youtube.com\/watch\?v=([\w\d\_]+)$/i.exec(urlOrId), url = _ref[0], id = _ref[1];
+          } else if (urlOrId.indexOf('vimeo.com') !== -1) {
+            provider = EmbedCode.VIMEO;
+            _ref1 = /^\/\/vimeo.com\/([\w\d\_]+)$/i.exec(urlOrId), url = _ref1[0], id = _ref1[1];
+          } else {
+            provider = EmbedCode.UNSUPPORTED;
+          }
+        } else {
+          provider = EmbedCode.YOUTUBE;
+          id = urlOrId;
+        }
+        return [id, provider];
+      };
+
+      EmbedCode.from = function(urlOrId) {
+        var id, provider, _ref;
+        _ref = EmbedCode.getId(urlOrId), id = _ref[0], provider = _ref[1];
+        return new EmbedCode(id, provider);
+      };
+
+      return EmbedCode;
+
+    })();
+    return jQuery.widget('BF.friendly-video-plugin', {
+      options: {
+        editable: null,
+        uuid: '',
+        defaultUrl: 'pqAsIm9_Eg4',
+        usePlaceholder: false,
+        dialogOpts: {
+          title: "YouTube Video",
+          buttonTitle: "Insert",
+          buttonUpdateTitle: "Update",
+          autoOpen: false,
+          width: 340,
+          height: 'auto',
+          modal: false,
+          resizable: true,
+          draggable: true,
+          dialogClass: 'insert-image-dialog'
+        }
+      },
+      dialog: null,
+      toolbar: null,
+      button: null,
+      currentEditable: null,
+      _create: function() {
+        var _this = this;
+        return this.element.on('halloenabled', function() {});
+      },
+      populateToolbar: function(toolbar) {
+        var buttonize, buttonset, createDialog, widget,
+          _this = this;
+        widget = this;
+        createDialog = function() {
+          var $dialog, buttonTitle, buttonUpdateTitle, dialog_html;
+          buttonTitle = _this.options.dialogOpts.buttonTitle;
+          buttonUpdateTitle = _this.options.dialogOpts.buttonUpdateTitle;
+          dialog_html = "						<form action=\"#\" method=\"post\" class=\"videoForm\">							<input class=\"url\" type=\"text\" name=\"url\"							       value=\"" + _this.options.defaultUrl + "\" />							<input type=\"submit\" id=\"addVideoButton\" 							       value=\"" + buttonTitle + "\"/>						</form>";
+          $dialog = $("<div>").attr('id', "" + _this.options.uuid + "-video-dialog").html(dialog_html);
+          return $dialog;
+        };
+        buttonset = jQuery("<span class=\"" + widget.widgetName + "\"></span>");
+        buttonize = function(type) {
+          var $button, id;
+          id = "" + _this.options.uuid + "-" + type;
+          $button = $('<span></span>');
+          $button.hallobutton({
+            label: "Video",
+            icon: "icon-film",
+            uuid: _this.options.uuid,
+            editable: _this.options.editable,
+            command: null,
+            queryState: false,
+            cssClass: _this.options.buttonCssClass
+          });
+          $button.click(function() {
+            console.log("Click");
+            if (widget.dialog.dialog("isOpen")) {
+              widget._closeDialog();
+            } else {
+              widget.lastSelection = widget.options.editable.getSelection();
+              widget._openDialog();
+            }
+            return false;
+          });
+          return $button;
+        };
+        this.options.editable.element.on("hallodeactivated", function(event, data) {
+          var placeholders;
+          if (_this.options.usePlaceholder) {
+            placeholders = $('img[data-video]', event.target);
+            placeholders.each(function() {
+              var $placeholder, data , embedCode, id, provider;
+              $placeholder = $(this);
+              data  = $placeholder.data('video').split('--');
+              provider = data[0], id = data[1];
+              embedCode = new EmbedCode(id, provider);
+              $placeholder.replaceWith(embedCode.getEmbedCode());
+            });
+          }
+          widget.currentEditable = $(event.target);
+        });
+        this.options.editable.element.on("halloactivated", function(event, data) {
+          var placeholders;
+          if (_this.options.usePlaceholder) {
+            placeholders = $('iframe[data-video]', event.target);
+            placeholders.each(function() {
+              var $iframe, data , embedCode, id, provider;
+              $iframe = $(this);
+              data  = $iframe.data('video').split('--');
+              provider = data[0], id = data[1];
+              embedCode = new EmbedCode(id, provider);
+              $iframe.replaceWith(embedCode.getThumbnailCode());
+            });
+          }
+        });
+        this.dialog = createDialog();
+        this.dialog.dialog(this.options.dialogOpts);
+        this.dialog.find("input[type=submit]").click(function(e) {
+          e.preventDefault();
+          _this._insertVideo($('input[name="url"]', e.target.parentNode).val());
+          return false;
+        });
+        this.dialog.on('dialogclose', function() {
+          var $document, editable, pos;
+          $document = $(document);
+          editable = _this.options.editable;
+          pos = $document.scrollTop();
+          editable.element.focus();
+          $document.scrollTop(pos);
+          editable.keepActivated(false);
+        });
+        this.button = buttonize("Video");
+        buttonset.append(this.button);
+        toolbar.append(buttonset);
+        this.toolbar = toolbar;
+      },
+      _openDialog: function(iframe) {
+        var $editableEl, $iframe, widget;
+        $iframe = $(iframe);
+        widget = this;
+        $editableEl = $(this.options.editable.element);
+        this.options.editable.keepActivated(true);
+        this.dialog.dialog("open");
+      },
+      _closeDialog: function() {
+        this.dialog.dialog("close");
+      },
+      _insertVideo: function(url) {
+        var editable, embedCode, html;
+        embedCode = EmbedCode.from(url);
+        html = this.options.usePlaceholder ? embedCode.getThumbnailCode() : embedCode.getEmbedCode();
+        editable = this.options.editable;
+        editable.restoreSelection(this.lastSelection);
+        document.execCommand("insertHTML", null, html);
+        editable.element.trigger('change');
+        editable.removeAllSelections();
+        this._closeDialog();
+      }
+    });
+  })(jQuery);
+
+}).call(this);
+
+(function() {
   (function(jQuery) {
     return jQuery.widget("IKS.halloformat", {
       options: {
@@ -2176,119 +2804,6 @@
 }).call(this);
 
 (function() {
-  (function($) {
-    $.widget("BF.friendly-image-plugin", {
-      options: {
-        uuid: "",
-        editable: null
-      },
-      limit: 8,
-      search: null,
-      searchUrl: null,
-      upload: null,
-      uploadUrl: null,
-      suggestions: null,
-      loaded: null,
-      dialogOpts: {
-        autoOpen: false,
-        width: 270,
-        height: "auto",
-        title: "Insert Images",
-        modal: false,
-        resizable: false,
-        draggable: true,
-        dialogClass: 'halloimage-dialog'
-      },
-      maxWidth: 250,
-      maxHeight: 250
-    });
-    return {
-      toolbar: null,
-      populateToolbar: function(toolbar) {
-        var buttonize, buttonset, createDialog, widget,
-          _this = this;
-        this.toolbar = toolbar;
-        widget = this;
-        createDialog = function(options) {
-          var $dialog, buttonTitle, buttonUpdateTitle, dialog_html;
-          buttonTitle = options.buttonTitle || "Image insert";
-          buttonUpdateTitle = options.buttonUpdateTitle || "Image update";
-          dialog_html = "				<form action=\"#\" method=\"post\" class=\"imageForm\">					<input class=\"url\" type=\"text\" name=\"url\"					       value=\"" + this.options.defaultUrl + "\" />					<input type=\"submit\" id=\"addImageButton\" 					       value=\"" + buttonTitle + "\"/>				</form>";
-          $dialog = $("<div>").attr('id', "" + options.uuid + "-image-dialog").html(dialog_html);
-          return $dialog.dialog(options);
-        };
-        buttonize = function(options) {
-          var $button, id;
-          id = "" + _this.options.uuid + "-image-button";
-          $button = $('<span></span>');
-          $button.hallobutton({
-            label: options.label || 'Image',
-            icon: "icon-picture",
-            uuid: options.uuid,
-            editable: _this.options.editable,
-            command: null,
-            queryState: false
-          });
-          $button.click(function() {
-            console.log("Click");
-            if (widget.dialog.dialog("isOpen")) {
-              widget._closeDialog();
-            } else {
-              widget.lastSelection = widget.options.editable.getSelection();
-              widget._openDialog();
-            }
-            return false;
-          });
-          return $button;
-        };
-        this.dialog = createDialog({
-          uuid: this.options.uuid,
-          buttonTitle: this.options.dialogOpts.buttonTitle,
-          buttonUpdateTitle: this.options.dialogOpts.buttonUpdateTitle
-        });
-        this.dialog.on('dialogclose', function() {
-          console.log('Close dialog');
-          widget.options.editable.element.focus();
-          return widget.options.editable.keepActivated(false);
-        });
-        this.button = buttonize({
-          uuid: this.options.uuid,
-          label: "Image"
-        });
-        buttonset = jQuery("<span class=\"" + widget.widgetName + "\"></span>");
-        buttonset.append(this.button);
-        toolbar.append(buttonset);
-        this.toolbar = toolbar;
-        this.options.editable.element.on("hallodeactivated", function(event) {
-          return widget._closeDialog();
-        });
-        jQuery(this.options.editable.element).delegate("img", "click", function(event) {
-          return widget._openDialog();
-        });
-      },
-      _create: function() {},
-      destroy: function() {},
-      cleanupContentClone: function(element) {},
-      _openDialog: function() {
-        var $editableEl, widget, xposition, yposition;
-        widget = this;
-        $editableEl = $(this.options.editable.element);
-        xposition = $editableEl.offset().left + $editableEl.outerWidth() + 10;
-        yposition = this.toolbar.offset().top - $(document).scrollTop() + 10;
-        this.dialog.dialog("option", "position", [xposition, yposition]);
-        this.lastSelection = this.options.editable.getSelection();
-        this.options.editable.keepActivated(true);
-        this.dialog.dialog("open");
-      },
-      _closeDialog: function() {
-        this.dialog.dialog("close");
-      }
-    };
-  })(jQuery);
-
-}).call(this);
-
-(function() {
   (function(jQuery) {
     return jQuery.widget('IKS.halloindicator', {
       options: {
@@ -2700,155 +3215,6 @@
 }).call(this);
 
 (function() {
-  (function($) {
-    return jQuery.widget('BF.friendly-table-plugin', {
-      options: {
-        editable: null,
-        uuid: '',
-        defaultCols: 4,
-        defaultRows: 5,
-        dialogOpts: {
-          title: "Table",
-          buttonTitle: "Insert",
-          buttonUpdateTitle: "Update",
-          autoOpen: false,
-          width: 560,
-          height: 'auto',
-          modal: false,
-          resizable: true,
-          draggable: true,
-          dialogClass: 'insert-table-dialog'
-        }
-      },
-      dialog: null,
-      toolbar: null,
-      button: null,
-      _create: function() {
-        var _this = this;
-        return this.element.on('halloenabled', function() {
-          console.log("Hallo enabled");
-          return void 0;
-        });
-      },
-      populateToolbar: function(toolbar) {
-        var buttonize, buttonset, createDialog, widget,
-          _this = this;
-        widget = this;
-        createDialog = function() {
-          var $dialog, buttonTitle, buttonUpdateTitle, dialog_html;
-          buttonTitle = _this.options.dialogOpts.buttonTitle;
-          buttonUpdateTitle = _this.options.dialogOpts.buttonUpdateTitle;
-          dialog_html = "						<form action=\"#\" method=\"post\" class=\"tableForm\">							<input class=\"cols\" type=\"text\" name=\"cols\"							       value=\"" + _this.options.defaultCols + "\" />							<input class=\"rows\" type=\"text\" name=\"rows\"							       value=\"" + _this.options.defaultRows + "\" />							<input class=\"rows\" type=\"checkbox\" name=\"header\"							       checked=\"checked\" />							<input type=\"submit\" id=\"addTableButton\" 							       value=\"" + buttonTitle + "\"/>						</form>";
-          $dialog = $("<div>").attr('id', "" + _this.options.uuid + "-dialog").html(dialog_html);
-          return $dialog;
-        };
-        buttonset = jQuery("<span class=\"" + widget.widgetName + "\"></span>");
-        buttonize = function(type) {
-          var $button, id;
-          id = "" + _this.options.uuid + "-" + type;
-          $button = $('<span></span>');
-          $button.hallobutton({
-            label: "Video",
-            icon: "icon-picture",
-            uuid: _this.options.uuid,
-            editable: _this.options.editable,
-            command: null,
-            queryState: false,
-            cssClass: _this.options.buttonCssClass
-          });
-          $button.click(function() {
-            console.log("Click");
-            if (widget.dialog.dialog("isOpen")) {
-              widget._closeDialog();
-            } else {
-              widget.lastSelection = widget.options.editable.getSelection();
-              widget._openDialog();
-            }
-            return false;
-          });
-          return $button;
-        };
-        this.dialog = createDialog();
-        this.dialog.dialog(this.options.dialogOpts);
-        this.dialog.find("input[type=submit]").click(function(e) {
-          var colCount, rowCount;
-          e.preventDefault();
-          colCount = $('input[name="cols"]', e.target.parentNode).val();
-          rowCount = $('input[name="rows"]', e.target.parentNode).val();
-          _this._insertTable(colCount, rowCount, true);
-          return false;
-        });
-        this.dialog.on('dialogclose', function() {
-          var $document, editable, pos;
-          $document = $(document);
-          editable = _this.options.editable;
-          pos = $document.scrollTop();
-          editable.element.focus();
-          $document.scrollTop(pos);
-          editable.keepActivated(false);
-        });
-        this.button = buttonize("Table");
-        buttonset.append(this.button);
-        toolbar.append(buttonset);
-        this.toolbar = toolbar;
-      },
-      _openDialog: function(iframe) {
-        var $editableEl, $iframe, widget, xposition, yposition;
-        $iframe = $(iframe);
-        widget = this;
-        $editableEl = $(this.options.editable.element);
-        xposition = $editableEl.offset().left + $editableEl.outerWidth() + 10;
-        yposition = this.toolbar.offset().top - $(document).scrollTop() + 10;
-        this.dialog.dialog("option", "position", [xposition, yposition]);
-        this.options.editable.keepActivated(true);
-        this.dialog.dialog("open");
-      },
-      _closeDialog: function() {
-        this.dialog.dialog("close");
-      },
-      _insertTable: function(cols, rows, header) {
-        var colsHtml, editable, headerHtml, html, num, rowsHtml;
-        colsHtml = (function() {
-          var _i, _results;
-          _results = [];
-          for (num = _i = 1; 1 <= cols ? _i <= cols : _i >= cols; num = 1 <= cols ? ++_i : --_i) {
-            _results.push('<td>&nbsp;</td>');
-          }
-          return _results;
-        })();
-        rowsHtml = (function() {
-          var _i, _results;
-          _results = [];
-          for (num = _i = 1; 1 <= rows ? _i <= rows : _i >= rows; num = 1 <= rows ? ++_i : --_i) {
-            _results.push("<tr>" + (colsHtml.join('')) + "</tr>");
-          }
-          return _results;
-        })();
-        if (true === header) {
-          headerHtml = (function() {
-            var _i, _results;
-            _results = [];
-            for (num = _i = 1; 1 <= cols ? _i <= cols : _i >= cols; num = 1 <= cols ? ++_i : --_i) {
-              _results.push('<th>&nbsp;</th>');
-            }
-            return _results;
-          })();
-          headerHtml = "<thead>" + (headerHtml.join('')) + "</thead>";
-        }
-        html = "<table>" + headerHtml + "<tbody>" + (rowsHtml.join('')) + "</tbody></table>";
-        editable = this.options.editable;
-        editable.restoreSelection(this.lastSelection);
-        document.execCommand("insertHTML", null, html);
-        editable.element.trigger('change');
-        editable.removeAllSelections();
-        this._closeDialog();
-      }
-    });
-  })(jQuery);
-
-}).call(this);
-
-(function() {
   (function(jQuery) {
     return jQuery.widget("IKS.hallotoolbarlinebreak", {
       options: {
@@ -2882,255 +3248,6 @@
           buttonRow = "<div          class=\"halloButtonrow halloButtonrow-" + rowcounter + "\" />";
           return buttonsets.wrapAll(buttonRow);
         }
-      }
-    });
-  })(jQuery);
-
-}).call(this);
-
-(function() {
-  var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
-
-  (function($) {
-    var EmbedCode;
-    EmbedCode = (function() {
-      EmbedCode.UNSUPPORTED = 'unsupported';
-
-      EmbedCode.YOUTUBE = 'youtube';
-
-      EmbedCode.VIMEO = 'vimeo';
-
-      EmbedCode.PROVIDERS = [EmbedCode.YOUTUBE, EmbedCode.VIMEO];
-
-      function EmbedCode(id, provider) {
-        var _ref;
-        this.id = id;
-        this.provider = provider;
-        if (_ref = !this.provider, __indexOf.call(EmbedCode.PROVIDERS, _ref) >= 0) {
-          throw new Error;
-        }
-      }
-
-      EmbedCode.prototype.generateUrl = function(id, provider) {
-        var url;
-        url = null;
-        switch (this.provider) {
-          case EmbedCode.YOUTUBE:
-            url = "//www.youtube.com/embed/" + id;
-            break;
-          case EmbedCode.VIMEO:
-            url = "//player.vimeo.com/video/" + id;
-        }
-        return url;
-      };
-
-      EmbedCode.prototype.generateThumbnailUrl = function(id, provider) {
-        var url;
-        url = null;
-        switch (this.provider) {
-          case EmbedCode.YOUTUBE:
-            url = "//img.youtube.com/vi/" + id + "/0.jpg";
-        }
-        return url;
-      };
-
-      EmbedCode.prototype.getThumbnailCode = function() {
-        var html, url;
-        html = null;
-        url = this.generateThumbnailUrl(this.id, this.provider);
-        switch (this.provider) {
-          case EmbedCode.YOUTUBE:
-            html = "<img src=\"" + url + "\" data-video=\"" + this.provider + "--" + this.id + "\" />";
-        }
-        return html;
-      };
-
-      EmbedCode.prototype.getEmbedCode = function() {
-        var embedCode, url;
-        embedCode = null;
-        url = this.generateUrl(this.id, this.provider);
-        switch (this.provider) {
-          case EmbedCode.YOUTUBE:
-            embedCode = "<iframe data-video=\"" + this.provider + "--" + this.id + "\" src=\"" + url + "\" width=\"560\" height=\"315\" frameborder=\"0\" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>";
-            break;
-          case EmbedCode.VIMEO:
-            embedCode = "<iframe data-video=\"" + this.provider + "--" + this.id + "\" src=\"" + url + "\" width=\"560\" height=\"315\" frameborder=\"0\" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>";
-        }
-        return embedCode;
-      };
-
-      EmbedCode.getId = function(urlOrId) {
-        var id, provider, url, _ref, _ref1;
-        id = -1;
-        provider = null;
-        if (urlOrId.indexOf('://') !== -1) {
-          if (urlOrId.indexOf('//') !== -1) {
-            urlOrId = urlOrId.slice(urlOrId.indexOf('//'));
-          }
-          if (urlOrId.indexOf('youtube.com') !== -1) {
-            provider = EmbedCode.YOUTUBE;
-            _ref = /^\/\/www.youtube.com\/watch\?v=([\w\d\_]+)$/i.exec(urlOrId), url = _ref[0], id = _ref[1];
-          } else if (urlOrId.indexOf('vimeo.com') !== -1) {
-            provider = EmbedCode.VIMEO;
-            _ref1 = /^\/\/vimeo.com\/([\w\d\_]+)$/i.exec(urlOrId), url = _ref1[0], id = _ref1[1];
-          } else {
-            provider = EmbedCode.UNSUPPORTED;
-          }
-        } else {
-          provider = EmbedCode.YOUTUBE;
-          id = urlOrId;
-        }
-        return [id, provider];
-      };
-
-      EmbedCode.from = function(urlOrId) {
-        var id, provider, _ref;
-        _ref = EmbedCode.getId(urlOrId), id = _ref[0], provider = _ref[1];
-        return new EmbedCode(id, provider);
-      };
-
-      return EmbedCode;
-
-    })();
-    return jQuery.widget('BF.friendly-video-plugin', {
-      options: {
-        editable: null,
-        uuid: '',
-        defaultUrl: 'pqAsIm9_Eg4',
-        usePlaceholder: false,
-        dialogOpts: {
-          title: "YouTube Video",
-          buttonTitle: "Insert",
-          buttonUpdateTitle: "Update",
-          autoOpen: false,
-          width: 560,
-          height: 'auto',
-          modal: false,
-          resizable: true,
-          draggable: true,
-          dialogClass: 'insert-image-dialog'
-        }
-      },
-      dialog: null,
-      toolbar: null,
-      button: null,
-      currentEditable: null,
-      _create: function() {
-        var _this = this;
-        return this.element.on('halloenabled', function() {});
-      },
-      populateToolbar: function(toolbar) {
-        var buttonize, buttonset, createDialog, widget,
-          _this = this;
-        widget = this;
-        createDialog = function() {
-          var $dialog, buttonTitle, buttonUpdateTitle, dialog_html;
-          buttonTitle = _this.options.dialogOpts.buttonTitle;
-          buttonUpdateTitle = _this.options.dialogOpts.buttonUpdateTitle;
-          dialog_html = "						<form action=\"#\" method=\"post\" class=\"videoForm\">							<input class=\"url\" type=\"text\" name=\"url\"							       value=\"" + _this.options.defaultUrl + "\" />							<input type=\"submit\" id=\"addVideoButton\" 							       value=\"" + buttonTitle + "\"/>						</form>";
-          $dialog = $("<div>").attr('id', "" + _this.options.uuid + "-video-dialog").html(dialog_html);
-          return $dialog;
-        };
-        buttonset = jQuery("<span class=\"" + widget.widgetName + "\"></span>");
-        buttonize = function(type) {
-          var $button, id;
-          id = "" + _this.options.uuid + "-" + type;
-          $button = $('<span></span>');
-          $button.hallobutton({
-            label: "Video",
-            icon: "icon-picture",
-            uuid: _this.options.uuid,
-            editable: _this.options.editable,
-            command: null,
-            queryState: false,
-            cssClass: _this.options.buttonCssClass
-          });
-          $button.click(function() {
-            console.log("Click");
-            if (widget.dialog.dialog("isOpen")) {
-              widget._closeDialog();
-            } else {
-              widget.lastSelection = widget.options.editable.getSelection();
-              widget._openDialog();
-            }
-            return false;
-          });
-          return $button;
-        };
-        this.options.editable.element.on("hallodeactivated", function(event, data) {
-          var placeholders;
-          if (_this.options.usePlaceholder) {
-            placeholders = $('img[data-video]', event.target);
-            placeholders.each(function() {
-              var $placeholder, data , embedCode, id, provider;
-              $placeholder = $(this);
-              data  = $placeholder.data('video').split('--');
-              provider = data[0], id = data[1];
-              embedCode = new EmbedCode(id, provider);
-              $placeholder.replaceWith(embedCode.getEmbedCode());
-            });
-          }
-          widget.currentEditable = $(event.target);
-        });
-        this.options.editable.element.on("halloactivated", function(event, data) {
-          var placeholders;
-          if (_this.options.usePlaceholder) {
-            placeholders = $('iframe[data-video]', event.target);
-            placeholders.each(function() {
-              var $iframe, data , embedCode, id, provider;
-              $iframe = $(this);
-              data  = $iframe.data('video').split('--');
-              provider = data[0], id = data[1];
-              embedCode = new EmbedCode(id, provider);
-              $iframe.replaceWith(embedCode.getThumbnailCode());
-            });
-          }
-        });
-        this.dialog = createDialog();
-        this.dialog.dialog(this.options.dialogOpts);
-        this.dialog.find("input[type=submit]").click(function(e) {
-          e.preventDefault();
-          _this._insertVideo($('input[name="url"]', e.target.parentNode).val());
-          return false;
-        });
-        this.dialog.on('dialogclose', function() {
-          var $document, editable, pos;
-          $document = $(document);
-          editable = _this.options.editable;
-          pos = $document.scrollTop();
-          editable.element.focus();
-          $document.scrollTop(pos);
-          editable.keepActivated(false);
-        });
-        this.button = buttonize("Video");
-        buttonset.append(this.button);
-        toolbar.append(buttonset);
-        this.toolbar = toolbar;
-      },
-      _openDialog: function(iframe) {
-        var $editableEl, $iframe, widget, xposition, yposition;
-        $iframe = $(iframe);
-        widget = this;
-        $editableEl = $(this.options.editable.element);
-        xposition = $editableEl.offset().left + $editableEl.outerWidth() + 10;
-        yposition = this.toolbar.offset().top - $(document).scrollTop() + 10;
-        this.dialog.dialog("option", "position", [xposition, yposition]);
-        this.options.editable.keepActivated(true);
-        this.dialog.dialog("open");
-      },
-      _closeDialog: function() {
-        this.dialog.dialog("close");
-      },
-      _insertVideo: function(url) {
-        var editable, embedCode, html;
-        embedCode = EmbedCode.from(url);
-        html = this.options.usePlaceholder ? embedCode.getThumbnailCode() : embedCode.getEmbedCode();
-        editable = this.options.editable;
-        editable.restoreSelection(this.lastSelection);
-        document.execCommand("insertHTML", null, html);
-        editable.element.trigger('change');
-        editable.removeAllSelections();
-        this._closeDialog();
       }
     });
   })(jQuery);
