@@ -55,7 +55,7 @@
 					# It's a YouTube URL
 					# http://www.youtube.com/watch?v=pqAsIm9_Eg4
 					provider = EmbedCode.YOUTUBE
-					[url, id] = /^\/\/www.youtube.com\/watch\?v=([\w\d\_]+)$/i.exec urlOrId
+					[url, id] = /^\/\/www.youtube.com\/watch\?v=([\w\d\_\-]+)$/i.exec urlOrId
 				else if urlOrId.indexOf('vimeo.com') != -1
 					# todo: Integrate Vimeo
 					# http://vimeo.com/73325589
