@@ -2943,18 +2943,22 @@
           return false;
         };
         dialogSubmitCb = function(event) {
-          var link, linkNode;
+          var limit, link, linkNode, selectionParent;
           event.preventDefault();
           link = urlInput.val();
           dialog.dialog('close');
-          widget.options.editable.restoreSelection(widget.lastSelection);
           if (isEmptyLink(link)) {
             document.execCommand("unlink", null, "");
           } else {
             if (!(/:\/\//.test(link)) && !(/^mailto:/.test(link))) {
               link = 'http://' + link;
             }
-            if (widget.lastSelection.startContainer.parentNode.href === void 0) {
+            selectionParent = widget.lastSelection.startContainer;
+            limit = 5;
+            while ((selectionParent.nodeType !== 1 || selectionParent.nodeName.toUpperCase() !== 'A') && --limit) {
+              selectionParent = selectionParent.parentNode;
+            }
+            if (selectionParent.href === void 0) {
               if (widget.lastSelection.collapsed) {
                 linkNode = jQuery("<a href='" + link + "'>" + link + "</a>")[0];
                 widget.lastSelection.insertNode(linkNode);
@@ -2962,7 +2966,7 @@
                 document.execCommand("createLink", null, link);
               }
             } else {
-              widget.lastSelection.startContainer.parentNode.href = link;
+              selectionParent.href = link;
             }
           }
           widget.options.editable.element.trigger('change');
@@ -2986,10 +2990,14 @@
           buttonset.append(buttonHolder);
           button = buttonHolder;
           button.on("click", function(event) {
-            var button_selector, selectionParent;
+            var button_selector, limit, selectionParent;
             widget.lastSelection = widget.options.editable.getSelection();
             urlInput = jQuery('input[name=url]', dialog);
-            selectionParent = widget.lastSelection.startContainer.parentNode;
+            selectionParent = widget.lastSelection.startContainer;
+            limit = 5;
+            while ((selectionParent.nodeType !== 1 || selectionParent.nodeName.toUpperCase() !== 'A') && --limit) {
+              selectionParent = selectionParent.parentNode;
+            }
             if (!selectionParent.href) {
               urlInput.val(widget.options.defaultUrl);
               jQuery(urlInput[0].form).find('input[type=submit]').val(butTitle);

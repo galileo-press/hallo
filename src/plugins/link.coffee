@@ -55,7 +55,13 @@
           # link does not have ://, add http:// as default protocol
           if !(/:\/\//.test link) && !(/^mailto:/.test link)
             link = 'http://' + link
-          if widget.lastSelection.startContainer.parentNode.href is undefined
+
+          selectionParent = widget.lastSelection.startContainer
+          limit = 5
+          while (selectionParent.nodeType != 1 or selectionParent.nodeName.toUpperCase() != 'A') && --limit
+            selectionParent = selectionParent.parentNode
+
+          if selectionParent.href is undefined
             # we need a new link
             # following check will work around ie and ff bugs when using
             # "createLink" on an empty selection
@@ -65,7 +71,7 @@
             else
               document.execCommand "createLink", null, link
           else
-            widget.lastSelection.startContainer.parentNode.href = link
+            selectionParent.href = link
         widget.options.editable.element.trigger('change')
         return false
 
@@ -89,7 +95,12 @@
           # we need to save the current selection because we will lose focus
           widget.lastSelection = widget.options.editable.getSelection()
           urlInput = jQuery 'input[name=url]', dialog
-          selectionParent = widget.lastSelection.startContainer.parentNode
+
+          selectionParent = widget.lastSelection.startContainer
+          limit = 5
+          while (selectionParent.nodeType != 1 or selectionParent.nodeName.toUpperCase() != 'A') && --limit
+            selectionParent = selectionParent.parentNode
+
           unless selectionParent.href
             urlInput.val(widget.options.defaultUrl)
             jQuery(urlInput[0].form).find('input[type=submit]').val(butTitle)
