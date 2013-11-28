@@ -47,7 +47,6 @@
         link = urlInput.val()
         dialog.dialog('close')
 
-        widget.options.editable.restoreSelection(widget.lastSelection)
         if isEmptyLink link
           # link is empty, remove it. Make sure the link is selected
           document.execCommand "unlink", null, ""
