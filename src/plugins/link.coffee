@@ -47,15 +47,20 @@
         link = urlInput.val()
         dialog.dialog('close')
 
+        selectionParent = widget.lastSelection.startContainer
         if isEmptyLink link
           # link is empty, remove it. Make sure the link is selected
+          if widget.lastSelection.collapsed
+            # if selection is of type 'caret', select the complete text node. Otherwise unlink won't work
+            widget.lastSelection.selectNode(selectionParent)
+            # we have to do this because Chrome otherwise does not update the native selection
+            rangy.getSelection().setSingleRange(widget.lastSelection)
           document.execCommand "unlink", null, ""
         else
           # link does not have ://, add http:// as default protocol
           if !(/:\/\//.test link) && !(/^mailto:/.test link)
             link = 'http://' + link
 
-          selectionParent = widget.lastSelection.startContainer
           limit = 5
           while (selectionParent.nodeType != 1 or selectionParent.nodeName.toUpperCase() != 'A') && --limit
             selectionParent = selectionParent.parentNode
