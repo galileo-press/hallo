@@ -41,6 +41,13 @@
         return true if link is widget.options.defaultUrl
         false
 
+      walkToLinkNode = (node, limit) ->
+        # Walks up the DOM (a limited number of steps) in search for a link node.
+        # Needed for links that are wrapped around other (possibly nested) markup.
+        while (node.nodeType != 1 or node.nodeName.toUpperCase() != 'A') && --limit
+          node = node.parentNode
+        return node
+
       dialogSubmitCb = (event) ->
         event.preventDefault()
 
@@ -54,16 +61,14 @@
             # if selection is of type 'caret', select the complete text node. Otherwise unlink won't work
             widget.lastSelection.selectNode(selectionParent)
             # we have to do this because Chrome otherwise does not update the native selection
-            rangy.getSelection().setSingleRange(widget.lastSelection)
+            widget.options.editable.restoreSelection(widget.lastSelection)
           document.execCommand "unlink", null, ""
         else
           # link does not have ://, add http:// as default protocol
           if !(/:\/\//.test link) && !(/^mailto:/.test link)
             link = 'http://' + link
 
-          limit = 5
-          while (selectionParent.nodeType != 1 or selectionParent.nodeName.toUpperCase() != 'A') && --limit
-            selectionParent = selectionParent.parentNode
+          selectionParent = walkToLinkNode(selectionParent, 5)
 
           if selectionParent.href is undefined
             # we need a new link
@@ -100,10 +105,7 @@
           widget.lastSelection = widget.options.editable.getSelection()
           urlInput = jQuery 'input[name=url]', dialog
 
-          selectionParent = widget.lastSelection.startContainer
-          limit = 5
-          while (selectionParent.nodeType != 1 or selectionParent.nodeName.toUpperCase() != 'A') && --limit
-            selectionParent = selectionParent.parentNode
+          selectionParent = walkToLinkNode(widget.lastSelection.startContainer, 5)
 
           unless selectionParent.href
             urlInput.val(widget.options.defaultUrl)
