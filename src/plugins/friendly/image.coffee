@@ -194,7 +194,6 @@
             @dialog.dialog @options.dialogOpts
 
             @dialog.on 'dialogclose', ->
-                console.log 'Close dialog'
                 do widget.options.editable.element.focus
                 widget.options.editable.keepActivated false
                 return

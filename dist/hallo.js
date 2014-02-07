@@ -1,15 +1,7 @@
-
-/*
-Hallo {{ VERSION }} - a rich text editing jQuery UI widget
-(c) 2011 Henri Bergius, IKS Consortium
-Hallo may be freely distributed under the MIT license
-http://hallojs.org
-*/
-
-
-(function() {
-  var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
-
+/* Hallo 1.0.4 - rich text editor for jQuery UI
+* by Henri Bergius and contributors. Available under the MIT license.
+* See http://hallojs.org for more information
+*/(function() {
   (function(jQuery) {
     return jQuery.widget('IKS.hallo', {
       toolbar: null,
@@ -431,16 +423,19 @@ http://hallojs.org
         }
       },
       _forceStructured: function(event) {
+        var e;
         try {
           return document.execCommand('styleWithCSS', 0, false);
-        } catch (e) {
+        } catch (_error) {
+          e = _error;
           try {
             return document.execCommand('useCSS', 0, true);
-          } catch (e) {
+          } catch (_error) {
+            e = _error;
             try {
               return document.execCommand('styleWithCSS', false, false);
-            } catch (e) {
-
+            } catch (_error) {
+              e = _error;
             }
           }
         }
@@ -451,15 +446,18 @@ http://hallojs.org
     });
   })(jQuery);
 
+}).call(this);
+
+(function() {
   (function(jQuery) {
     var z;
     z = null;
     if (this.VIE !== void 0) {
       z = new VIE;
-      z.use(new z.StanbolService)({
+      z.use(new z.StanbolService({
         proxyDisabled: true,
         url: 'http://dev.iks-project.eu:8081'
-      });
+      }));
     }
     return jQuery.widget('IKS.halloannotate', {
       options: {
@@ -548,7 +546,7 @@ http://hallojs.org
         return this.button.hallobutton('disable');
       },
       turnOn: function() {
-        var widget,
+        var e, widget,
           _this = this;
         this.turnPending();
         widget = this;
@@ -561,7 +559,8 @@ http://hallojs.org
             _this.button.hallobutton('checked', true);
             return _this.button.hallobutton('enable');
           });
-        } catch (e) {
+        } catch (_error) {
+          e = _error;
           return alert(e);
         }
       },
@@ -578,6 +577,9 @@ http://hallojs.org
     });
   })(jQuery);
 
+}).call(this);
+
+(function() {
   (function(jQuery) {
     return jQuery.widget('IKS.halloblacklist', {
       options: {
@@ -605,6 +607,9 @@ http://hallojs.org
     });
   })(jQuery);
 
+}).call(this);
+
+(function() {
   (function(jQuery) {
     return jQuery.widget('IKS.halloblock', {
       options: {
@@ -692,6 +697,9 @@ http://hallojs.org
     });
   })(jQuery);
 
+}).call(this);
+
+(function() {
   (function(jQuery) {
     var rangyMessage;
     rangyMessage = 'The hallocleanhtml plugin requires the selection save and\
@@ -717,7 +725,7 @@ http://hallojs.org
           lastContent = editor.html();
           editor.html('');
           return setTimeout(function() {
-            var cleanPasted, pasted, range;
+            var cleanPasted, error, pasted, range;
             pasted = editor.html();
             cleanPasted = jQuery.htmlClean(pasted, _this.options);
             editor.html(lastContent);
@@ -725,7 +733,8 @@ http://hallojs.org
             if (cleanPasted !== '') {
               try {
                 return document.execCommand('insertHTML', false, cleanPasted);
-              } catch (error) {
+              } catch (_error) {
+                error = _error;
                 range = widget.options.editable.getSelection();
                 return range.insertNode(range.createContextualFragment(cleanPasted));
               }
@@ -736,6 +745,9 @@ http://hallojs.org
     });
   })(jQuery);
 
+}).call(this);
+
+(function() {
   (function($) {
     return $.widget("BF.friendly-image-plugin", {
       options: {
@@ -881,7 +893,6 @@ http://hallojs.org
         this.dialog = createDialog();
         this.dialog.dialog(this.options.dialogOpts);
         this.dialog.on('dialogclose', function() {
-          console.log('Close dialog');
           widget.options.editable.element.focus();
           widget.options.editable.keepActivated(false);
         });
@@ -946,6 +957,9 @@ http://hallojs.org
     });
   })(jQuery);
 
+}).call(this);
+
+(function() {
   (function($) {
     return jQuery.widget('BF.friendly-table-plugin', {
       options: {
@@ -1082,10 +1096,14 @@ http://hallojs.org
     });
   })(jQuery);
 
+}).call(this);
+
+(function() {
+  var __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+
   (function($) {
     var EmbedCode;
     EmbedCode = (function() {
-
       EmbedCode.UNSUPPORTED = 'unsupported';
 
       EmbedCode.YOUTUBE = 'youtube';
@@ -1324,6 +1342,9 @@ http://hallojs.org
     });
   })(jQuery);
 
+}).call(this);
+
+(function() {
   (function(jQuery) {
     return jQuery.widget("IKS.halloformat", {
       options: {
@@ -1368,6 +1389,9 @@ http://hallojs.org
     });
   })(jQuery);
 
+}).call(this);
+
+(function() {
   (function(jQuery) {
     return jQuery.widget("IKS.halloheadings", {
       options: {
@@ -1394,7 +1418,7 @@ http://hallojs.org
             uuid: _this.options.uuid,
             cssClass: _this.options.buttonCssClass,
             queryState: function(event) {
-              var compared, map, result, val, value, _i, _len, _ref;
+              var compared, e, map, result, val, value, _i, _len, _ref;
               try {
                 value = document.queryCommandValue(command);
                 if (ie) {
@@ -1412,8 +1436,8 @@ http://hallojs.org
                 }
                 result = compared ? true : false;
                 return buttonHolder.hallobutton('checked', result);
-              } catch (e) {
-
+              } catch (_error) {
+                e = _error;
               }
             }
           });
@@ -1431,6 +1455,9 @@ http://hallojs.org
     });
   })(jQuery);
 
+}).call(this);
+
+(function() {
   (function(jQuery) {
     return jQuery.widget("IKS.hallohtml", {
       options: {
@@ -1529,6 +1556,205 @@ http://hallojs.org
     });
   })(jQuery);
 
+}).call(this);
+
+(function() {
+  (function(jQuery) {
+    return jQuery.widget("IKS.halloimage", {
+      options: {
+        editable: null,
+        toolbar: null,
+        uuid: "",
+        limit: 8,
+        search: null,
+        searchUrl: null,
+        suggestions: null,
+        loaded: null,
+        upload: null,
+        uploadUrl: null,
+        dialogOpts: {
+          autoOpen: false,
+          width: 270,
+          height: "auto",
+          title: "Insert Images",
+          modal: false,
+          resizable: false,
+          draggable: true,
+          dialogClass: 'halloimage-dialog'
+        },
+        dialog: null,
+        buttonCssClass: null,
+        entity: null,
+        vie: null,
+        dbPediaUrl: "http://dev.iks-project.eu/stanbolfull",
+        maxWidth: 250,
+        maxHeight: 250
+      },
+      populateToolbar: function(toolbar) {
+        var buttonHolder, buttonset, dialogId, id, tabContent, tabs, widget;
+        this.options.toolbar = toolbar;
+        widget = this;
+        dialogId = "" + this.options.uuid + "-image-dialog";
+        this.options.dialog = jQuery("<div id=\"" + dialogId + "\">        <div class=\"nav\">          <ul class=\"tabs\">          </ul>          <div id=\"" + this.options.uuid + "-tab-activeIndicator\"            class=\"tab-activeIndicator\" />        </div>        <div class=\"dialogcontent\">        </div>");
+        tabs = jQuery('.tabs', this.options.dialog);
+        tabContent = jQuery('.dialogcontent', this.options.dialog);
+        if (widget.options.suggestions) {
+          this._addGuiTabSuggestions(tabs, tabContent);
+        }
+        if (widget.options.search || widget.options.searchUrl) {
+          this._addGuiTabSearch(tabs, tabContent);
+        }
+        if (widget.options.upload || widget.options.uploadUrl) {
+          this._addGuiTabUpload(tabs, tabContent);
+        }
+        this.current = jQuery('<div class="currentImage"></div>').halloimagecurrent({
+          uuid: this.options.uuid,
+          imageWidget: this,
+          editable: this.options.editable,
+          dialog: this.options.dialog,
+          maxWidth: this.options.maxWidth,
+          maxHeight: this.options.maxHeight
+        });
+        jQuery('.dialogcontent', this.options.dialog).append(this.current);
+        buttonset = jQuery("<span class=\"" + widget.widgetName + "\"></span>");
+        id = "" + this.options.uuid + "-image";
+        buttonHolder = jQuery('<span></span>');
+        buttonHolder.hallobutton({
+          label: 'Images',
+          icon: 'icon-picture',
+          editable: this.options.editable,
+          command: null,
+          queryState: false,
+          uuid: this.options.uuid,
+          cssClass: this.options.buttonCssClass
+        });
+        buttonset.append(buttonHolder);
+        this.button = buttonHolder;
+        this.button.on("click", function(event) {
+          if (widget.options.dialog.dialog("isOpen")) {
+            widget._closeDialog();
+          } else {
+            widget._openDialog();
+          }
+          return false;
+        });
+        this.options.editable.element.on("hallodeactivated", function(event) {
+          return widget._closeDialog();
+        });
+        jQuery(this.options.editable.element).delegate("img", "click", function(event) {
+          return widget._openDialog();
+        });
+        toolbar.append(buttonset);
+        this.options.dialog.dialog(this.options.dialogOpts);
+        return this._handleTabs();
+      },
+      setCurrent: function(image) {
+        return this.current.halloimagecurrent('setImage', image);
+      },
+      _handleTabs: function() {
+        var widget;
+        widget = this;
+        jQuery('.nav li', this.options.dialog).on('click', function() {
+          var id, left;
+          jQuery("." + widget.widgetName + "-tab").hide();
+          id = jQuery(this).attr('id');
+          jQuery("#" + id + "-content").show();
+          left = jQuery(this).position().left + (jQuery(this).width() / 2);
+          return jQuery("#" + widget.options.uuid + "-tab-activeIndicator").css({
+            "margin-left": left
+          });
+        });
+        return jQuery('.nav li', this.options.dialog).first().click();
+      },
+      _openDialog: function() {
+        var cleanUp, editableEl, getActive, suggestionSelector, toolbarEl, widget, xposition, yposition,
+          _this = this;
+        widget = this;
+        cleanUp = function() {
+          return window.setTimeout(function() {
+            var thumbnails;
+            thumbnails = jQuery(".imageThumbnail");
+            return jQuery(thumbnails).each(function() {
+              var size;
+              size = jQuery("#" + this.id).width();
+              if (size <= 20) {
+                return jQuery("#" + this.id).parent("li").remove();
+              }
+            });
+          }, 15000);
+        };
+        suggestionSelector = "#" + this.options.uuid + "-tab-suggestions-content";
+        getActive = function() {
+          return jQuery('.imageThumbnailActive', suggestionSelector).first().attr("src");
+        };
+        jQuery("#" + this.options.uuid + "-sugg-activeImage").attr("src", getActive());
+        jQuery("#" + this.options.uuid + "-sugg-activeImageBg").attr("src", getActive());
+        this.lastSelection = this.options.editable.getSelection();
+        editableEl = jQuery(this.options.editable.element);
+        toolbarEl = jQuery(this.options.toolbar);
+        xposition = editableEl.offset().left + editableEl.outerWidth() - 3;
+        yposition = toolbarEl.offset().top + toolbarEl.outerHeight() + 29;
+        yposition -= jQuery(document).scrollTop();
+        this.options.dialog.dialog("option", "position", [xposition, yposition]);
+        cleanUp();
+        widget.options.loaded = 1;
+        this.options.editable.keepActivated(true);
+        this.options.dialog.dialog("open");
+        return this.options.dialog.on('dialogclose', function() {
+          jQuery('label', _this.button).removeClass('ui-state-active');
+          _this.options.editable.element.focus();
+          return _this.options.editable.keepActivated(false);
+        });
+      },
+      _closeDialog: function() {
+        return this.options.dialog.dialog("close");
+      },
+      _addGuiTabSuggestions: function(tabs, element) {
+        var tab;
+        tabs.append(jQuery("<li id=\"" + this.options.uuid + "-tab-suggestions\"        class=\"" + this.widgetName + "-tabselector " + this.widgetName + "-tab-suggestions\">          <span>Suggestions</span>        </li>"));
+        tab = jQuery("<div id=\"" + this.options.uuid + "-tab-suggestions-content\"        class=\"" + this.widgetName + "-tab tab-suggestions\"></div>");
+        element.append(tab);
+        return tab.halloimagesuggestions({
+          uuid: this.options.uuid,
+          imageWidget: this,
+          entity: this.options.entity
+        });
+      },
+      _addGuiTabSearch: function(tabs, element) {
+        var dialogId, tab, widget;
+        widget = this;
+        dialogId = "" + this.options.uuid + "-image-dialog";
+        tabs.append(jQuery("<li id=\"" + this.options.uuid + "-tab-search\"        class=\"" + this.widgetName + "-tabselector " + this.widgetName + "-tab-search\">          <span>Search</span>        </li>"));
+        tab = jQuery("<div id=\"" + this.options.uuid + "-tab-search-content\"        class=\"" + widget.widgetName + "-tab tab-search\"></div>");
+        element.append(tab);
+        return tab.halloimagesearch({
+          uuid: this.options.uuid,
+          imageWidget: this,
+          searchCallback: this.options.search,
+          searchUrl: this.options.searchUrl,
+          limit: this.options.limit,
+          entity: this.options.entity
+        });
+      },
+      _addGuiTabUpload: function(tabs, element) {
+        var tab;
+        tabs.append(jQuery("<li id=\"" + this.options.uuid + "-tab-upload\"        class=\"" + this.widgetName + "-tabselector " + this.widgetName + "-tab-upload\">          <span>Upload</span>        </li>"));
+        tab = jQuery("<div id=\"" + this.options.uuid + "-tab-upload-content\"        class=\"" + this.widgetName + "-tab tab-upload\"></div>");
+        element.append(tab);
+        return tab.halloimageupload({
+          uuid: this.options.uuid,
+          uploadCallback: this.options.upload,
+          uploadUrl: this.options.uploadUrl,
+          imageWidget: this,
+          entity: this.options.entity
+        });
+      }
+    });
+  })(jQuery);
+
+}).call(this);
+
+(function() {
   (function(jQuery) {
     return jQuery.widget('IKS.halloimagecurrent', {
       options: {
@@ -1880,6 +2106,9 @@ http://hallojs.org
     });
   })(jQuery);
 
+}).call(this);
+
+(function() {
   (function(jQuery) {
     return jQuery.widget('IKS.halloimagesearch', {
       options: {
@@ -1984,6 +2213,9 @@ http://hallojs.org
     });
   })(jQuery);
 
+}).call(this);
+
+(function() {
   (function(jQuery) {
     return jQuery.widget('IKS.halloimagesuggestions', {
       loaded: false,
@@ -2025,10 +2257,10 @@ http://hallojs.org
         if (!this.options.dbPediaUrl) {
           return;
         }
-        return this.options.vie.use(new vie.DBPediaService)({
+        return this.options.vie.use(new vie.DBPediaService({
           url: this.options.dbPediaUrl,
           proxyDisabled: true
-        });
+        }));
       },
       _getSuggestions: function() {
         var limit, normalizedTags, tags;
@@ -2104,6 +2336,9 @@ http://hallojs.org
     });
   })(jQuery);
 
+}).call(this);
+
+(function() {
   (function(jQuery) {
     return jQuery.widget('IKS.halloimageupload', {
       options: {
@@ -2181,199 +2416,9 @@ http://hallojs.org
     });
   })(jQuery);
 
-  (function(jQuery) {
-    return jQuery.widget("IKS.halloimage", {
-      options: {
-        editable: null,
-        toolbar: null,
-        uuid: "",
-        limit: 8,
-        search: null,
-        searchUrl: null,
-        suggestions: null,
-        loaded: null,
-        upload: null,
-        uploadUrl: null,
-        dialogOpts: {
-          autoOpen: false,
-          width: 270,
-          height: "auto",
-          title: "Insert Images",
-          modal: false,
-          resizable: false,
-          draggable: true,
-          dialogClass: 'halloimage-dialog'
-        },
-        dialog: null,
-        buttonCssClass: null,
-        entity: null,
-        vie: null,
-        dbPediaUrl: "http://dev.iks-project.eu/stanbolfull",
-        maxWidth: 250,
-        maxHeight: 250
-      },
-      populateToolbar: function(toolbar) {
-        var buttonHolder, buttonset, dialogId, id, tabContent, tabs, widget;
-        this.options.toolbar = toolbar;
-        widget = this;
-        dialogId = "" + this.options.uuid + "-image-dialog";
-        this.options.dialog = jQuery("<div id=\"" + dialogId + "\">        <div class=\"nav\">          <ul class=\"tabs\">          </ul>          <div id=\"" + this.options.uuid + "-tab-activeIndicator\"            class=\"tab-activeIndicator\" />        </div>        <div class=\"dialogcontent\">        </div>");
-        tabs = jQuery('.tabs', this.options.dialog);
-        tabContent = jQuery('.dialogcontent', this.options.dialog);
-        if (widget.options.suggestions) {
-          this._addGuiTabSuggestions(tabs, tabContent);
-        }
-        if (widget.options.search || widget.options.searchUrl) {
-          this._addGuiTabSearch(tabs, tabContent);
-        }
-        if (widget.options.upload || widget.options.uploadUrl) {
-          this._addGuiTabUpload(tabs, tabContent);
-        }
-        this.current = jQuery('<div class="currentImage"></div>').halloimagecurrent({
-          uuid: this.options.uuid,
-          imageWidget: this,
-          editable: this.options.editable,
-          dialog: this.options.dialog,
-          maxWidth: this.options.maxWidth,
-          maxHeight: this.options.maxHeight
-        });
-        jQuery('.dialogcontent', this.options.dialog).append(this.current);
-        buttonset = jQuery("<span class=\"" + widget.widgetName + "\"></span>");
-        id = "" + this.options.uuid + "-image";
-        buttonHolder = jQuery('<span></span>');
-        buttonHolder.hallobutton({
-          label: 'Images',
-          icon: 'icon-picture',
-          editable: this.options.editable,
-          command: null,
-          queryState: false,
-          uuid: this.options.uuid,
-          cssClass: this.options.buttonCssClass
-        });
-        buttonset.append(buttonHolder);
-        this.button = buttonHolder;
-        this.button.on("click", function(event) {
-          if (widget.options.dialog.dialog("isOpen")) {
-            widget._closeDialog();
-          } else {
-            widget._openDialog();
-          }
-          return false;
-        });
-        this.options.editable.element.on("hallodeactivated", function(event) {
-          return widget._closeDialog();
-        });
-        jQuery(this.options.editable.element).delegate("img", "click", function(event) {
-          return widget._openDialog();
-        });
-        toolbar.append(buttonset);
-        this.options.dialog.dialog(this.options.dialogOpts);
-        return this._handleTabs();
-      },
-      setCurrent: function(image) {
-        return this.current.halloimagecurrent('setImage', image);
-      },
-      _handleTabs: function() {
-        var widget;
-        widget = this;
-        jQuery('.nav li', this.options.dialog).on('click', function() {
-          var id, left;
-          jQuery("." + widget.widgetName + "-tab").hide();
-          id = jQuery(this).attr('id');
-          jQuery("#" + id + "-content").show();
-          left = jQuery(this).position().left + (jQuery(this).width() / 2);
-          return jQuery("#" + widget.options.uuid + "-tab-activeIndicator").css({
-            "margin-left": left
-          });
-        });
-        return jQuery('.nav li', this.options.dialog).first().click();
-      },
-      _openDialog: function() {
-        var cleanUp, editableEl, getActive, suggestionSelector, toolbarEl, widget, xposition, yposition,
-          _this = this;
-        widget = this;
-        cleanUp = function() {
-          return window.setTimeout(function() {
-            var thumbnails;
-            thumbnails = jQuery(".imageThumbnail");
-            return jQuery(thumbnails).each(function() {
-              var size;
-              size = jQuery("#" + this.id).width();
-              if (size <= 20) {
-                return jQuery("#" + this.id).parent("li").remove();
-              }
-            });
-          }, 15000);
-        };
-        suggestionSelector = "#" + this.options.uuid + "-tab-suggestions-content";
-        getActive = function() {
-          return jQuery('.imageThumbnailActive', suggestionSelector).first().attr("src");
-        };
-        jQuery("#" + this.options.uuid + "-sugg-activeImage").attr("src", getActive());
-        jQuery("#" + this.options.uuid + "-sugg-activeImageBg").attr("src", getActive());
-        this.lastSelection = this.options.editable.getSelection();
-        editableEl = jQuery(this.options.editable.element);
-        toolbarEl = jQuery(this.options.toolbar);
-        xposition = editableEl.offset().left + editableEl.outerWidth() - 3;
-        yposition = toolbarEl.offset().top + toolbarEl.outerHeight() + 29;
-        yposition -= jQuery(document).scrollTop();
-        this.options.dialog.dialog("option", "position", [xposition, yposition]);
-        cleanUp();
-        widget.options.loaded = 1;
-        this.options.editable.keepActivated(true);
-        this.options.dialog.dialog("open");
-        return this.options.dialog.on('dialogclose', function() {
-          jQuery('label', _this.button).removeClass('ui-state-active');
-          _this.options.editable.element.focus();
-          return _this.options.editable.keepActivated(false);
-        });
-      },
-      _closeDialog: function() {
-        return this.options.dialog.dialog("close");
-      },
-      _addGuiTabSuggestions: function(tabs, element) {
-        var tab;
-        tabs.append(jQuery("<li id=\"" + this.options.uuid + "-tab-suggestions\"        class=\"" + this.widgetName + "-tabselector " + this.widgetName + "-tab-suggestions\">          <span>Suggestions</span>        </li>"));
-        tab = jQuery("<div id=\"" + this.options.uuid + "-tab-suggestions-content\"        class=\"" + this.widgetName + "-tab tab-suggestions\"></div>");
-        element.append(tab);
-        return tab.halloimagesuggestions({
-          uuid: this.options.uuid,
-          imageWidget: this,
-          entity: this.options.entity
-        });
-      },
-      _addGuiTabSearch: function(tabs, element) {
-        var dialogId, tab, widget;
-        widget = this;
-        dialogId = "" + this.options.uuid + "-image-dialog";
-        tabs.append(jQuery("<li id=\"" + this.options.uuid + "-tab-search\"        class=\"" + this.widgetName + "-tabselector " + this.widgetName + "-tab-search\">          <span>Search</span>        </li>"));
-        tab = jQuery("<div id=\"" + this.options.uuid + "-tab-search-content\"        class=\"" + widget.widgetName + "-tab tab-search\"></div>");
-        element.append(tab);
-        return tab.halloimagesearch({
-          uuid: this.options.uuid,
-          imageWidget: this,
-          searchCallback: this.options.search,
-          searchUrl: this.options.searchUrl,
-          limit: this.options.limit,
-          entity: this.options.entity
-        });
-      },
-      _addGuiTabUpload: function(tabs, element) {
-        var tab;
-        tabs.append(jQuery("<li id=\"" + this.options.uuid + "-tab-upload\"        class=\"" + this.widgetName + "-tabselector " + this.widgetName + "-tab-upload\">          <span>Upload</span>        </li>"));
-        tab = jQuery("<div id=\"" + this.options.uuid + "-tab-upload-content\"        class=\"" + this.widgetName + "-tab tab-upload\"></div>");
-        element.append(tab);
-        return tab.halloimageupload({
-          uuid: this.options.uuid,
-          uploadCallback: this.options.upload,
-          uploadUrl: this.options.uploadUrl,
-          imageWidget: this,
-          entity: this.options.entity
-        });
-      }
-    });
-  })(jQuery);
+}).call(this);
 
+(function() {
   (function(jQuery) {
     return jQuery.widget("IKS.hallo-image-insert-edit", {
       options: {
@@ -2725,6 +2770,9 @@ http://hallojs.org
     });
   })(jQuery);
 
+}).call(this);
+
+(function() {
   (function(jQuery) {
     return jQuery.widget('IKS.halloindicator', {
       options: {
@@ -2783,6 +2831,9 @@ http://hallojs.org
     });
   })(jQuery);
 
+}).call(this);
+
+(function() {
   (function(jQuery) {
     return jQuery.widget("IKS.hallojustify", {
       options: {
@@ -2817,6 +2868,9 @@ http://hallojs.org
     });
   })(jQuery);
 
+}).call(this);
+
+(function() {
   (function(jQuery) {
     return jQuery.widget("IKS.hallolink", {
       options: {
@@ -2950,6 +3004,9 @@ http://hallojs.org
     });
   })(jQuery);
 
+}).call(this);
+
+(function() {
   (function(jQuery) {
     return jQuery.widget("IKS.hallolists", {
       options: {
@@ -2991,6 +3048,9 @@ http://hallojs.org
     });
   })(jQuery);
 
+}).call(this);
+
+(function() {
   (function(jQuery) {
     return jQuery.widget("IKS.hallooverlay", {
       options: {
@@ -3084,6 +3144,9 @@ http://hallojs.org
     });
   })(jQuery);
 
+}).call(this);
+
+(function() {
   (function(jQuery) {
     return jQuery.widget("IKS.halloreundo", {
       options: {
@@ -3118,6 +3181,9 @@ http://hallojs.org
     });
   })(jQuery);
 
+}).call(this);
+
+(function() {
   (function(jQuery) {
     return jQuery.widget("IKS.hallotoolbarlinebreak", {
       options: {
@@ -3155,6 +3221,9 @@ http://hallojs.org
     });
   })(jQuery);
 
+}).call(this);
+
+(function() {
   (function(jQuery) {
     return jQuery.widget('IKS.halloToolbarContextual', {
       toolbar: null,
@@ -3282,6 +3351,9 @@ http://hallojs.org
     });
   })(jQuery);
 
+}).call(this);
+
+(function() {
   (function(jQuery) {
     return jQuery.widget('IKS.halloToolbarFixed', {
       toolbar: null,
@@ -3378,6 +3450,9 @@ http://hallojs.org
     });
   })(jQuery);
 
+}).call(this);
+
+(function() {
   (function(jQuery) {
     return jQuery.widget('IKS.halloToolbarInstant', {
       toolbar: null,
@@ -3505,6 +3580,9 @@ http://hallojs.org
     });
   })(jQuery);
 
+}).call(this);
+
+(function() {
   (function(jQuery) {
     jQuery.widget('IKS.hallobutton', {
       button: null,
@@ -3520,9 +3598,9 @@ http://hallojs.org
         cssClass: null
       },
       _create: function() {
-        var hoverclass, id, opts, _base, _ref,
+        var hoverclass, id, opts, _base,
           _this = this;
-        if ((_ref = (_base = this.options).icon) == null) {
+        if ((_base = this.options).icon == null) {
           _base.icon = "icon-" + (this.options.label.toLowerCase());
         }
         id = "" + this.options.uuid + "-" + this.options.label;
@@ -3558,7 +3636,7 @@ http://hallojs.org
         this.element.append(this.button);
         if (this.options.queryState === true) {
           queryState = function(event) {
-            var compared, value;
+            var compared, e, value;
             if (!_this.options.command) {
               return;
             }
@@ -3570,8 +3648,8 @@ http://hallojs.org
               } else {
                 return _this.checked(document.queryCommandState(_this.options.command));
               }
-            } catch (e) {
-
+            } catch (_error) {
+              e = _error;
             }
           };
         } else {
@@ -3653,6 +3731,9 @@ http://hallojs.org
     });
   })(jQuery);
 
+}).call(this);
+
+(function() {
   (function(jQuery) {
     return jQuery.widget('IKS.hallodropdownbutton', {
       button: null,
@@ -3665,8 +3746,8 @@ http://hallojs.org
         cssClass: null
       },
       _create: function() {
-        var _base, _ref;
-        return (_ref = (_base = this.options).icon) != null ? _ref : _base.icon = "icon-" + (this.options.label.toLowerCase());
+        var _base;
+        return (_base = this.options).icon != null ? (_base = this.options).icon : _base.icon = "icon-" + (this.options.label.toLowerCase());
       },
       _init: function() {
         var target,
@@ -3728,5 +3809,3 @@ http://hallojs.org
   })(jQuery);
 
 }).call(this);
-
-// Generated by CoffeeScript 1.5.0-pre
