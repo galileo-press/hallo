@@ -781,7 +781,7 @@
         createDialog = function() {
           var $browseButton, $dialog, $fileInput, $imageUploadQueue, $resetButton, $uploadButton, buttonTitle, dialog_html;
           buttonTitle = "Upload image";
-          dialog_html = "                    <form action=\"#\" method=\"post\" class=\"image-upload-form\">                        <input type=\"file\" style=\"display:none\" multiple=\"\" />                        <button class=\"browse\">Browse</button>                        <button class=\"upload\" style=\"display:none\">Upload</button>                        <button class=\"reset\" style=\"display:none\">Reset</button>                    </form>                    <div>                        <ul class=\"image-upload-queue\"></ul>                        <ul class=\"available-images group\"></ul>                    </div>";
+          dialog_html = "                    <form action=\"#\" method=\"post\" class=\"image-upload-form\">                        <input type=\"file\" style=\"display:none\" multiple=\"\" accept=\"image/*\" />                        <button class=\"browse\">Browse</button>                        <button class=\"upload\" style=\"display:none\">Upload</button>                        <button class=\"reset\" style=\"display:none\">Reset</button>                    </form>                    <div>                        <ul class=\"image-upload-queue\"></ul>                        <ul class=\"available-images group\"></ul>                    </div>";
           _this.$dialog = $dialog = $("<div>").attr('id', "" + _this.options.uuid + "-friendly-image-dialog").html(dialog_html);
           $fileInput = $dialog.find('input[type="file"]');
           $imageUploadQueue = $dialog.find('ul.image-upload-queue');
