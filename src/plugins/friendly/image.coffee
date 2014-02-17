@@ -35,7 +35,7 @@
                 buttonTitle = "Upload image"
                 dialog_html = "
                     <form action=\"#\" method=\"post\" class=\"image-upload-form\">
-                        <input type=\"file\" style=\"display:none\" multiple=\"\" />
+                        <input type=\"file\" style=\"display:none\" multiple=\"\" accept=\"image/*\" />
                         <button class=\"browse\">Browse</button>
                         <button class=\"upload\" style=\"display:none\">Upload</button>
                         <button class=\"reset\" style=\"display:none\">Reset</button>
